@@ -19,17 +19,17 @@ import random
 import os
 import time
 
-# ── СТАНИ КЛІТИН ────────────────────────────────────────────────────────────
+#СТАНИ КЛІТИН
 
-EMPTY       = 0   # порожня клітина
-HEALTHY     = 1   # здорова клітина (нормальна тканина)
-CANCER      = 2   # звичайна ракова клітина (RTC)
-CANCER_STEM = 3   # стовбурова ракова клітина (STC) — безсмертна
-IMMUNE      = 4   # імунна клітина (IC)
-NECROTIC    = 5   # некротична (мертва) клітина
+EMPTY       = 0   #порожня клітина
+HEALTHY     = 1   #здорова клітина (нормальна тканина)
+CANCER      = 2   #звичайна ракова клітина (RTC)
+CANCER_STEM = 3   #стовбурова ракова клітина (STC) — безсмертна
+IMMUNE      = 4   #імунна клітина (IC)
+NECROTIC    = 5   #некротична (мертва) клітина
 
 
-# ── ПАРАМЕТРИ СИМУЛЯЦІЇ ──────────────────────────────────────────────────────
+#ПАРАМЕТРИ СИМУЛЯЦІЇ
 
 class SimulationParams:
     """
@@ -45,28 +45,28 @@ class SimulationParams:
     def __init__(self, **kwargs):
         self.grid_size = kwargs.get('grid_size', 100)
 
-        # ймовірності для ракових клітин
+        #ймовірності для ракових клітин
         self.prob_proliferation = kwargs.get('prob_proliferation', 0.04)
         self.prob_migration     = kwargs.get('prob_migration', 0.02)
         self.prob_apoptosis     = kwargs.get('prob_apoptosis', 0.005)
 
-        # стовбурові клітини
+        #стовбурові клітини
         self.prob_stem_division        = kwargs.get('prob_stem_division', 0.01)
         self.max_proliferation_potential = kwargs.get('max_proliferation_potential', 10)
 
-        # імунна система
+        #імунна система
         self.prob_immune_kill    = kwargs.get('prob_immune_kill', 0.15)
         self.prob_immune_death   = kwargs.get('prob_immune_death', 0.05)
         self.immune_migration_speed = kwargs.get('immune_migration_speed', 0.3)
         self.immune_recruit_rate = kwargs.get('immune_recruit_rate', 0.001)
 
-        # початковий стан
+        #початковий стан
         self.initial_healthy_density = kwargs.get('initial_healthy_density', 0.3)
         self.initial_immune_count    = kwargs.get('initial_immune_count', 15)
         self.necrotic_decay_time     = kwargs.get('necrotic_decay_time', 50)
 
 
-# ── СУСІДСТВО ────────────────────────────────────────────────────────────────
+#СУСІДСТВО
 
 MOORE_DIRS = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
 
@@ -80,7 +80,7 @@ def get_neighbors(row, col, grid_size):
     ]
 
 
-# ── КЛІТИННИЙ АВТОМАТ ────────────────────────────────────────────────────────
+#КЛІТИННИЙ АВТОМАТ
 
 class TumorCA:
     """
@@ -120,11 +120,11 @@ class TumorCA:
         self.step_count = 0
         self.history = {k: [] for k in self.history}
 
-        # здорові клітини (рівномірно з заданою щільністю)
+        #здорові клітини (рівномірно з заданою щільністю)
         mask = np.random.random((self.N, self.N)) < self.p.initial_healthy_density
         self.grid[mask] = HEALTHY
 
-        # ракові клітини
+        #ракові клітини
         center = self.N // 2
         if cancer_positions is None:
             cancer_positions = [(center, center)]
@@ -137,7 +137,7 @@ class TumorCA:
                 self.grid[r, c] = CANCER
                 self.potential[r, c] = self.p.max_proliferation_potential
 
-        # імунні клітини (рандомно по вільних місцях)
+        #імунні клітини (рандомно по вільних місцях)
         placed = 0
         attempts = 0
         while placed < self.p.initial_immune_count and attempts < self.N * self.N:
@@ -176,7 +176,7 @@ class TumorCA:
                     new_nec[row, col] = 0
 
             elif state == HEALTHY:
-                pass  # здорові клітини пасивні
+                pass  #здорові клітини пасивні
 
             elif state == IMMUNE:
                 self._step_immune(row, col, new_grid, new_pot, new_nec)
@@ -203,7 +203,7 @@ class TumorCA:
         """
         is_stem = (state == CANCER_STEM)
 
-        # апоптоз і перевірка потенціалу (тільки для RTC)
+        #апоптоз і перевірка потенціалу (тільки для RTC)
         if not is_stem:
             if np.random.random() < self.p.prob_apoptosis:
                 new_grid[row, col] = NECROTIC
@@ -219,9 +219,9 @@ class TumorCA:
         free = [(r, c) for r, c in neighbors if new_grid[r, c] in (EMPTY, HEALTHY)]
 
         if not free:
-            return  # немає місця — спокій
+            return  #немає місця — спокій
 
-        # поділ
+        #поділ
         if np.random.random() < self.p.prob_proliferation:
             tr, tc = free[0]
             if is_stem:
@@ -238,7 +238,7 @@ class TumorCA:
                 new_pot[row, col] = p - 1
             return
 
-        # міграція
+        #міграція
         if np.random.random() < self.p.prob_migration:
             tr, tc = free[0]
             new_grid[tr, tc] = state
@@ -347,7 +347,7 @@ class TumorCA:
         )
 
 
-# ── ЗАПУСК СИМУЛЯЦІЇ ─────────────────────────────────────────────────────────
+#ЗАПУСК СИМУЛЯЦІЇ
 
 
 def run_simulation(params=None, n_steps=200, cancer_type='stem'):
@@ -384,7 +384,7 @@ def run_simulation(params=None, n_steps=200, cancer_type='stem'):
     return ca
 
 
-# ── СЦЕНАРІЇ ─────────────────────────────────────────────────────────────────
+#СЦЕНАРІЇ
 
 def scenario_nonclonogenic():
     """
@@ -423,7 +423,7 @@ def scenario_immune():
     return run_simulation(params, n_steps=300, cancer_type='stem')
 
 
-# ── MAIN ─────────────────────────────────────────────────────────────────────
+#MAIN
 
 if __name__ == "__main__":
     n_steps = int(input("Кількість кроків [300]: ") or 300)
