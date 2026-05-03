@@ -99,11 +99,6 @@ def print_stats(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
         print(f"{name:<14} {p:>12,} {f:>8,} {survived:>11}")
     print("═" * 56 + "\n")
 
-
-
-#ГРАФІКИ
-
-
 CMAP_COLORS = ['#1a1a2e', '#4caf50', '#f44336', '#b71c1c', '#2196f3', '#9e9e9e']
 LEGEND_PATCHES = [
     mpatches.Patch(color='#1a1a2e', label='Порожньо'),
@@ -123,8 +118,6 @@ def _grid_to_color(grid):
     m[grid == IMMUNE]      = 4
     m[grid == NECROTIC]    = 5
     return m
-
-
 def _total(history):
     return [c + s for c, s in zip(history['cancer'], history['stem'])]
 
@@ -136,8 +129,6 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     fig.suptitle('Аналіз клітинного автомату пухлини',
                  fontsize=17, fontweight='bold', y=0.98)
     gs = gridspec.GridSpec(2, 3, figure=fig, hspace=0.42, wspace=0.32)
-
-    #1. динаміка RTC
     ax1 = fig.add_subplot(gs[0, 0])
     s = ca_rtc.history['step']
     ax1.plot(s, ca_rtc.history['cancer'],   color='crimson', lw=2,   label='RTC')
@@ -148,7 +139,7 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax1.legend(fontsize=9)
     ax1.grid(alpha=0.25)
 
-    #2. динаміка STC
+
     ax2 = fig.add_subplot(gs[0, 1])
     s = ca_stc.history['step']
     ax2.plot(s, ca_stc.history['cancer'], color='crimson', lw=2,   label='RTC')
@@ -159,7 +150,7 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax2.legend(fontsize=9)
     ax2.grid(alpha=0.25)
 
-    #3. STC + імунна
+
     ax3 = fig.add_subplot(gs[0, 2])
     s = ca_immune.history['step']
     ax3.plot(s, ca_immune.history['cancer'],   color='crimson',   lw=2,   label='RTC')
@@ -172,7 +163,7 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax3.legend(fontsize=9)
     ax3.grid(alpha=0.25)
 
-    #4. порівняння всіх сценаріїв
+
     ax4 = fig.add_subplot(gs[1, 0])
     ax4.plot(ca_rtc.history['step'],    _total(ca_rtc.history),    color='orange',    lw=2, label='RTC')
     ax4.plot(ca_stc.history['step'],    _total(ca_stc.history),    color='red',       lw=2, label='STC')
@@ -184,7 +175,6 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax4.legend(fontsize=9)
     ax4.grid(alpha=0.25)
 
-    #5. heatmap STC+імунна
     ax5 = fig.add_subplot(gs[1, 1])
     ax5.imshow(_grid_to_color(ca_immune.grid), cmap=cmap,
                vmin=0, vmax=5, interpolation='nearest')
@@ -192,7 +182,7 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax5.axis('off')
     ax5.legend(handles=LEGEND_PATCHES, loc='lower right', fontsize=8, framealpha=0.8)
 
-    #6. heatmap мульти
+
     ax6 = fig.add_subplot(gs[1, 2])
     ax6.imshow(_grid_to_color(ca_multi.grid), cmap=cmap,
                vmin=0, vmax=5, interpolation='nearest')
