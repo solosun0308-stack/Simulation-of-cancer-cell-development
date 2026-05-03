@@ -337,32 +337,6 @@ class TumorCA:
                 f"Імунні: {i:>4d} | Некроз: {n:>4d}")
 
 
-# ======== ЧАСТИНА ОЛЕНКИ ==========================================================
-    def to_ascii(self, size=30):
-        """Текстова візуалізація центральної частини решітки."""
-        symbols = {EMPTY:'·', HEALTHY:'○', CANCER:'●',
-                   CANCER_STEM:'★', IMMUNE:'◆', NECROTIC:'✕'}
-
-        tumor = np.argwhere((self.grid == CANCER) | (self.grid == CANCER_STEM))
-        if len(tumor):
-            cr, cc = int(np.mean(tumor[:,0])), int(np.mean(tumor[:,1]))
-        else:
-            cr, cc = self.N // 2, self.N // 2
-
-        h = size // 2
-        rows = range(max(0, cr-h), min(self.N, cr+h))
-        cols = range(max(0, cc-h), min(self.N, cc+h))
-
-        return '\n'.join(
-            ''.join(symbols.get(self.grid[r, c], '?') for c in cols)
-            for r in rows
-        )
-# ================================================================================
-
-
-# ================ SIMULATION ================
-
-
 def run_simulation(params=None, n_steps=200, cancer_type='stem'):
     """
     Запускає симуляцію з анімацією в терміналі.
@@ -381,7 +355,6 @@ def run_simulation(params=None, n_steps=200, cancer_type='stem'):
             label = "=== ФІНАЛ ===" if is_last else f"Крок {step+1}/{n_steps}"
             print(label)
             print("· порожньо  ○ здорова  ● RTC  ★ STC  ◆ імунна  ✕ некроз\n")
-            print(ca.to_ascii())
             print(f"\n{ca.stats_str()}")
             if not is_last:
                 time.sleep(1)
@@ -409,7 +382,6 @@ def run_simulation_from(ca, n_steps=300):
             label = "=== ФІНАЛ ===" if is_last else f"Крок {step+1}/{n_steps}"
             print(label)
             print("· порожньо  ○ здорова  ● RTC  ★ STC  ◆ імунна  ✕ некроз\n")
-            print(ca.to_ascii(size=50))
             print(f"\n{ca.stats_str()}")
             if not is_last:
                 time.sleep(1)
@@ -420,8 +392,6 @@ def run_simulation_from(ca, n_steps=300):
 
     return ca
 
-
-# ========= SCENARIOUS ==========
 
 def scenario_nonclonogenic(n_steps=300, grid_size=80):
     """
