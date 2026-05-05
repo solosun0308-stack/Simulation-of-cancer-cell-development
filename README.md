@@ -41,7 +41,8 @@ Simulation-of-cancer-cell-development/
 ├── chemotherapy.py        # Модуль хіміотерапії
 ├── radiotherapy.py        # Модуль радіотерапії
 ├── immunotherapy.py       # Модуль імунотерапії
-├── plot_simulation.py     # Генерація графіків matplotlib
+├── plot_simulation.py     # Генерація графіків клітинного автомату
+├── compare_treatments.py  # Порівняння 3 сценаріїв графіками: без лікування, хіміотерапія, радіотерапія
 ├── test_therapy.py        # Інтеграційний тест усіх методів терапії
 ├── ПОЯСНЕННЯ_МОДЕЛІ.md    # Детальне пояснення математики моделі
 ├── .gitignore
