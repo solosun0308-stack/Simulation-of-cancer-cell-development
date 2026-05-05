@@ -202,8 +202,8 @@ python test_therapy.py
 |---------|-----------------|
 | Іван Антоненко | Ядро симуляції (`tumor_new.py`), тестування, графіки (`plot_simulation.py`), README |
 | Устим Трухін | Ядро симуляції (`tumor_new.py`), тестування, графіки (`plot_simulation.py`), README |
-| Соломія | Терапевтичні модулі (`chemotherapy.py`, `radiotherapy.py`, `immunotherapy.py`, `test_therapy.py`) |
-| Оленка | Дизайн та візуалізація |
+| Соломія Лещук | Терапевтичні модулі (`chemotherapy.py`, `radiotherapy.py`, `immunotherapy.py`, `test_therapy.py`) |
+| Оленка Кулиняк| Дизайн та візуалізація |
 
 ---
 
