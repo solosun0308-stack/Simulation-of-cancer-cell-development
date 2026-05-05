@@ -445,33 +445,3 @@ def scenario_immune(n_steps=300, grid_size=80):
     )
     return run_simulation(params, n_steps=n_steps, cancer_type='stem')
 
-# ── MAIN ─────────────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    n_steps = int(input("Кількість кроків [300]: ") or 300)
-    grid_size = int(input("Розмір решітки [80]: ") or 80)
-
-    params = SimulationParams(grid_size=grid_size)
-    print("Оберіть сценарій:")
-    print("  1 — RTC (пухлина зникає)")
-    print("  2 — STC (стабільна пухлина)")
-    print("  3 — STC + імунна система")
-    print("  4 — кілька пухлин (взаємодія)")
-    print("  0 — швидкий тест (50×50, 100 кроків)")
-
-    try:
-        choice = input("\nВибір [0-3]: ").strip()
-    except EOFError:
-        choice = '0'
-
-    if choice == '1':
-        scenario_nonclonogenic(n_steps=n_steps, grid_size=grid_size)
-    elif choice == '2':
-        scenario_stem(n_steps=n_steps, grid_size=grid_size)
-    elif choice == '3':
-        scenario_immune(n_steps=n_steps, grid_size=grid_size)
-    elif choice == '4':
-        n = int(input("Кількість пухлин [5]: ") or 5)
-        scenario_multi(n_tumors=n, n_steps=n_steps, grid_size=grid_size)
-    else:
-        run_simulation(params, n_steps=100)
