@@ -11,6 +11,8 @@ import argparse
 from tumor_new import (SimulationParams, TumorCA, run_simulation, scenario_nonclonogenic, scenario_stem, scenario_immune, scenario_multi)
 from chemotherapy import apply_chemotherapy
 from radiotherapy import apply_radiotherapy
+from immunotherapy import apply_immunotherapy
+
 
 
 def parse_args():
@@ -18,7 +20,7 @@ def parse_args():
         description="Симуляція росту ракової пухлини")
     parser.add_argument("--steps", type=int, default=200, help="Кількість кроків симуляції")
     parser.add_argument("--grid-size", type=int, default=80, help="Розмір решітки N×N")
-    parser.add_argument("--scenario", type=str, default="no-treatment", choices=["no-treatment", "rtc", "stem", "immune", "multi", "chemo", "radio"],
+    parser.add_argument("--scenario", type=str, default="no-treatment", choices=["no-treatment", "rtc", "stem", "immune", "multi", "chemo", "radio", "immuno"],
                         help="Сценарій: no-treatment | rtc | stem | immune | multi | chemo | radio")
     parser.add_argument("--chemo-interval", type=int, default=10, help="Кожні скільки кроків застосовувати хімію")
     parser.add_argument("--radio-radius", type=int, default=6, help="Радіус дії радіотерапії")
@@ -138,6 +140,25 @@ def run_radio(args):
     print(ca.stats_str())
     return ca
 
+def run_immuno(args):
+    import numpy as np
+    if args.seed is not None:
+        np.random.seed(args.seed)
+    params = SimulationParams(grid_size=args.grid_size,
+                              prob_stem_division=0.02,
+                              initial_healthy_density=0.2,
+                              initial_immune_count=20)
+    ca = TumorCA(params)
+    ca.initialize(cancer_type='stem')
+    for step in range(args.steps):
+        ca.simulation_step()
+        if (step + 1) % 10 == 0:
+            ca.grid = apply_immunotherapy(ca.grid)
+            print(f"[Крок {step+1}] Імунотерапія застосована. {ca.stats_str()}")
+        elif (step + 1) % 10 == 0:
+            print(ca.stats_str())
+    return ca
+
 
 def main():
     args = parse_args()
@@ -153,6 +174,7 @@ def main():
         "multi":        run_multi,
         "chemo":        run_chemo,
         "radio":        run_radio,
+        "immuno": run_immuno
     }
     runners[args.scenario](args)
 

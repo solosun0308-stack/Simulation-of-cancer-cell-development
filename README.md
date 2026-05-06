@@ -75,6 +75,7 @@ Simulation-of-cancer-cell-development/
 | `no-treatment` | STC + імунна, без терапії | Базовий сценарій для порівняння |
 | `chemo` | Хіміотерапія кожні N кроків | Масовий некроз RTC, STC виживають |
 | `radio` | Радіотерапія після симуляції | Кругла зона некрозу в епіцентрі |
+| `immuno` | Імунотерапія кожні 10 кроків | Пухлина деградує з країв, IC атакують |
 
 ---
 
@@ -155,6 +156,9 @@ python main.py --scenario radio --steps 200 --radio-radius 8
 
 # З фіксованим seed для відтворюваності
 python main.py --scenario chemo --steps 200 --seed 42
+
+# Імунотерапія
+python main.py --scenario immuno --steps 200 --grid-size 80
 ```
 
 ### Всі аргументи
