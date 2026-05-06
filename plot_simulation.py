@@ -6,7 +6,10 @@
 """
 
 import sys
+import csv
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.patches as mpatches
@@ -74,30 +77,53 @@ def print_stats(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
         return hist['cancer'][-1] + hist['stem'][-1]
 
     def survival(hist):
-        """На якому кроці пухлина зникла, або None якщо вижила."""
         for i, (c, s) in enumerate(zip(hist['cancer'], hist['stem'])):
             if c + s == 0 and i > 5:
                 return hist['step'][i]
         return None
 
-    print("\n" + "═" * 56)
-    print(f"  ПІДСУМКОВА СТАТИСТИКА  (кроків: {steps})")
-    print("═" * 56)
+    print(f"  ПІДСУМКОВА СТАТИСТИКА  (кроків: {steps})\n")
     rows = [
         ("RTC",         ca_rtc),
         ("STC",         ca_stc),
         ("STC+імунна",  ca_immune),
         ("Мульти",      ca_multi),
     ]
-    print(f"{'Сценарій':<14} {'Пік пухлини':>12} {'Фінал':>8} {'Зникла на':>11}")
-    print("─" * 56)
+    print(f"{'Сценарій':<14} {'Пік пухлини':>12} {'Фінал':>8} {'Зникла на':>11}\n")
     for name, ca in rows:
         p = peak(ca.history)
         f = final(ca.history)
         s = survival(ca.history)
         survived = f"крок {s}" if s else "—  (жива)"
         print(f"{name:<14} {p:>12,} {f:>8,} {survived:>11}")
-    print("═" * 56 + "\n")
+
+
+def save_csv(ca_rtc, ca_stc, ca_immune, ca_multi, filename='simulation_results.csv'):
+    scenarios = [
+        ('RTC',        ca_rtc),
+        ('STC',        ca_stc),
+        ('STC_immune', ca_immune),
+        ('Multi',      ca_multi),
+    ]
+    fieldnames = ['scenario', 'step', 'cancer', 'stem', 'immune', 'necrotic', 'healthy', 'total_tumor']
+    with open(filename, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for name, ca in scenarios:
+            h = ca.history
+            for i in range(len(h['step'])):
+                writer.writerow({
+                    'scenario':    name,
+                    'step':        h['step'][i],
+                    'cancer':      h['cancer'][i],
+                    'stem':        h['stem'][i],
+                    'immune':      h.get('immune',   [0]*len(h['step']))[i],
+                    'necrotic':    h.get('necrotic', [0]*len(h['step']))[i],
+                    'healthy':     h.get('healthy',  [0]*len(h['step']))[i],
+                    'total_tumor': h['cancer'][i] + h['stem'][i],
+                })
+    print(f"CSV збережено: {filename}")
+
 
 CMAP_COLORS = ['#1a1a2e', '#4caf50', '#f44336', '#b71c1c', '#2196f3', '#9e9e9e']
 LEGEND_PATCHES = [
@@ -118,6 +144,7 @@ def _grid_to_color(grid):
     m[grid == IMMUNE]      = 4
     m[grid == NECROTIC]    = 5
     return m
+
 def _total(history):
     return [c + s for c, s in zip(history['cancer'], history['stem'])]
 
@@ -139,7 +166,6 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax1.legend(fontsize=9)
     ax1.grid(alpha=0.25)
 
-
     ax2 = fig.add_subplot(gs[0, 1])
     s = ca_stc.history['step']
     ax2.plot(s, ca_stc.history['cancer'], color='crimson', lw=2,   label='RTC')
@@ -149,7 +175,6 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax2.set_ylabel('Кількість клітин')
     ax2.legend(fontsize=9)
     ax2.grid(alpha=0.25)
-
 
     ax3 = fig.add_subplot(gs[0, 2])
     s = ca_immune.history['step']
@@ -162,7 +187,6 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax3.set_ylabel('Кількість клітин')
     ax3.legend(fontsize=9)
     ax3.grid(alpha=0.25)
-
 
     ax4 = fig.add_subplot(gs[1, 0])
     ax4.plot(ca_rtc.history['step'],    _total(ca_rtc.history),    color='orange',    lw=2, label='RTC')
@@ -182,7 +206,6 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
     ax5.axis('off')
     ax5.legend(handles=LEGEND_PATCHES, loc='lower right', fontsize=8, framealpha=0.8)
 
-
     ax6 = fig.add_subplot(gs[1, 2])
     ax6.imshow(_grid_to_color(ca_multi.grid), cmap=cmap,
                vmin=0, vmax=5, interpolation='nearest')
@@ -192,7 +215,8 @@ def plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, steps):
 
     plt.savefig('tumor_analysis.png', dpi=150, bbox_inches='tight')
     print("Графік збережено: tumor_analysis.png")
-    plt.show()
+    plt.close()
+
 
 if __name__ == '__main__':
     N     = int(sys.argv[1]) if len(sys.argv) > 1 else 70
@@ -200,4 +224,5 @@ if __name__ == '__main__':
 
     ca_rtc, ca_stc, ca_immune, ca_multi = collect_data(N=N, STEPS=STEPS)
     print_stats(ca_rtc, ca_stc, ca_immune, ca_multi, STEPS)
+    save_csv(ca_rtc, ca_stc, ca_immune, ca_multi)
     plot_all(ca_rtc, ca_stc, ca_immune, ca_multi, STEPS)
