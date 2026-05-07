@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симуляція росту пухлини</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.85);
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --danger: #ef4444;
+
+            --c-empty-bg: #0f172a;
+            --c-empty-border: #1e293b;
+            --c-healthy: #5a5f59;
+            --c-rtc: #ef4444;
+            --c-stc: #a855f7;
+            --c-immune: #0ea5e9;
+            --c-necrotic: #451a03;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 360px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .microscope-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        canvas#ca-canvas {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+            background-color: var(--c-empty-bg);
+            transition: cursor 0.2s;
+        }
+
+        canvas#ca-canvas.targeting {
+            cursor: crosshair;
+        }
+
+        .dashboard {
+            height: 240px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 15px 20px;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+        }
+
+        h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .panel {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        button {
+            background: #1e293b;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        button:hover {
+            background: #334155;
+            border-color: var(--accent);
+        }
+
+        button.active {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .btn-primary:hover {
+            background: #7dd3fc;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.4);
+            text-align: center;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .slider-group {
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--accent);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.8rem;
+            margin-top: auto;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+
+        .chart-container {
+            flex: 1;
+            height: 100%;
+            position: relative;
+        }
+
+        .dashboard-stats {
+            width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            font-size: 0.85rem;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div>
+            <h1>Модель клітинного автомата</h1>
+        </div>
+
+        <div class="panel">
+            <h2>Ініціалізація сценарію</h2>
+            <div class="btn-grid" id="scenario-buttons">
+                <button data-scenario="control" class="active">Контроль (Природній ріст)</button>
+                <button data-scenario="immune">Імунна відповідь</button>
+                <button data-scenario="aggressive">Агресивний рак (STC)</button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button id="btn-play" class="btn-primary" style="flex:1">Пауза</button>
+                <button id="btn-reset" style="flex:1; text-align: center;">Перезапуск</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Лікування (Інтерактивно)</h2>
+            <div class="btn-grid">
+                <button id="btn-radio" class="btn-danger">Радіотерапія (Вказати ціль)</button>
+                <button id="btn-chemo" class="btn-danger">Хіміотерапія (Системна)</button>
+                <button id="btn-immuno" class="btn-danger">Імунотерапія (Стимуляція)</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Клітинні параметри</h2>
+            <div class="slider-group">
+                <div class="slider-label"><span>Проліферація (Pp)</span> <span id="val-pp">4.2%</span></div>
+                <input type="range" id="slide-pp" min="0" max="0.1" step="0.001" value="0.0417">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>Міграція (Pm)</span> <span id="val-pm">2.0%</span></div>
+                <input type="range" id="slide-pm" min="0" max="0.1" step="0.001" value="0.02">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>Апоптоз (Pa)</span> <span id="val-pa">0.5%</span></div>
+                <input type="range" id="slide-pa" min="0" max="0.1" step="0.001" value="0.005">
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="microscope-container" id="canvas-wrapper">
+            <canvas id="ca-canvas"></canvas>
+        </div>
+
+        <div class="dashboard">
+            <div class="dashboard-stats">
+                <h2>Час та Статус</h2>
+                <div class="stat-box" style="border-color: var(--border);">
+                    <div class="stat-value" id="stat-day">День 0</div>
+                    <div class="stat-label">Кроків симуляції</div>
+                </div>
+                <div id="sim-status" class="status-indicator">Пухлина розвивається</div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="dot" style="background: var(--c-healthy)"></div>Здорова
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot" style="background: var(--c-rtc)"></div>RTC
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot" style="background: var(--c-stc)"></div>STC
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot" style="background: var(--c-immune)"></div>Імунна
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot" style="background: var(--c-necrotic)"></div>Некроз
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="growthChart"></canvas>
+            </div>
+
+            <div class="dashboard-stats">
+                <h2>Популяція</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: var(--c-rtc)" id="stat-rtc">0</div>
+                        <div class="stat-label">RTC</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: var(--c-stc)" id="stat-stc">0</div>
+                        <div class="stat-label">STC</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: var(--c-immune)" id="stat-imm">0</div>
+                        <div class="stat-label">Імунні</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATES = { EMPTY: 0, HEALTHY: 1, CANCER: 2, CANCER_STEM: 3, IMMUNE: 4, NECROTIC: 5 };
+        const N = 80;
+
+        class TumorSimulation {
+            constructor() {
+                this.grid = new Int8Array(N * N);
+                this.potential = new Int16Array(N * N);
+                this.necroticTimer = new Int16Array(N * N);
+                this.stepCount = 0;
+
+                this.params = {
+                    prob_proliferation: 0.0417,
+                    prob_migration: 0.02,
+                    prob_apoptosis: 0.005,
+                    prob_stem_division: 0.01,
+                    max_proliferation_potential: 10,
+                    prob_immune_kill: 0.15,
+                    prob_immune_death: 0.05,
+                    immune_migration_speed: 0.3,
+                    immune_recruit_rate: 0.001,
+                    necrotic_decay_time: 50
+                };
+            }
+
+            init(scenario) {
+                this.grid.fill(STATES.EMPTY);
+                this.potential.fill(0);
+                this.necroticTimer.fill(0);
+                this.stepCount = 0;
+
+                let initHealthy = 0.2;
+                let initImmune = 0;
+                this.params.max_proliferation_potential = 10;
+                this.params.prob_apoptosis = 0.005;
+
+                if (scenario === 'immune') {
+                    initImmune = 20;
+                } else if (scenario === 'aggressive') {
+                    this.params.max_proliferation_potential = 20;
+                    this.params.prob_stem_division = 0.05;
+                }
+
+                for (let i = 0; i < N * N; i++) {
+                    if (Math.random() < initHealthy) this.grid[i] = STATES.HEALTHY;
+                }
+
+                let centerIdx = Math.floor(N / 2) * N + Math.floor(N / 2);
+                this.grid[centerIdx] = STATES.CANCER_STEM;
+                this.potential[centerIdx] = this.params.max_proliferation_potential + 1;
+
+
+                let placed = 0, attempts = 0;
+                while (placed < initImmune && attempts < N * N) {
+                    let idx = Math.floor(Math.random() * (N * N));
+                    if (this.grid[idx] === STATES.EMPTY || this.grid[idx] === STATES.HEALTHY) {
+                        this.grid[idx] = STATES.IMMUNE;
+                        placed++;
+                    }
+                    attempts++;
+                }
+            }
+
+            getNeighbors(idx) {
+                let n = [];
+                let r = Math.floor(idx / N);
+                let c = idx % N;
+
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        let nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < N && nc >= 0 && nc < N) {
+                            n.push(nr * N + nc);
+                        }
+                    }
+                }
+                for (let i = n.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [n[i], n[j]] = [n[j], n[i]];
+                }
+                return n;
+            }
+
+            step() {
+                this.stepCount++;
+                let newGrid = new Int8Array(this.grid);
+                let newPot = new Int16Array(this.potential);
+                let newNec = new Int16Array(this.necroticTimer);
+
+                let occupied = [];
+                for (let i = 0; i < N * N; i++) {
+                    if (this.grid[i] !== STATES.EMPTY) occupied.push(i);
+                }
+
+                for (let i = occupied.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [occupied[i], occupied[j]] = [occupied[j], occupied[i]];
+                }
+
+                let currentCancerCount = 0;
+                let currentImmuneCount = 0;
+
+                for (let idx of occupied) {
+                    let state = this.grid[idx];
+
+                    if (state === STATES.NECROTIC) {
+                        newNec[idx]++;
+                        if (newNec[idx] >= this.params.necrotic_decay_time) {
+                            newGrid[idx] = STATES.EMPTY;
+                            newNec[idx] = 0;
+                        }
+                        continue;
+                    }
+                    if (state === STATES.HEALTHY) continue;
+
+                    if (state === STATES.IMMUNE) {
+                        currentImmuneCount++;
+                        let neighbors = this.getNeighbors(idx);
+                        let cancerFound = false;
+
+                        for (let nIdx of neighbors) {
+                            if (this.grid[nIdx] === STATES.CANCER || this.grid[nIdx] === STATES.CANCER_STEM) {
+                                cancerFound = true;
+                                let roll = Math.random();
+                                if (roll < this.params.prob_immune_kill) {
+                                    newGrid[nIdx] = STATES.NECROTIC;
+                                    newPot[nIdx] = 0;
+                                    newNec[nIdx] = 0;
+                                } else if (roll < this.params.prob_immune_kill + this.params.prob_immune_death) {
+                                    newGrid[idx] = STATES.EMPTY;
+                                }
+                                break;
+                            }
+                        }
+
+                        if (!cancerFound && Math.random() < this.params.immune_migration_speed) {
+                            let free = neighbors.find(nIdx => newGrid[nIdx] === STATES.EMPTY);
+                            if (free !== undefined) {
+                                newGrid[free] = STATES.IMMUNE;
+                                newGrid[idx] = STATES.EMPTY;
+                            }
+                        }
+                        continue;
+                    }
+
+                    if (state === STATES.CANCER || state === STATES.CANCER_STEM) {
+                        currentCancerCount++;
+                        let isStem = state === STATES.CANCER_STEM;
+
+                        if (!isStem) {
+                            if (Math.random() < this.params.prob_apoptosis || this.potential[idx] <= 0) {
+                                newGrid[idx] = STATES.NECROTIC;
+                                newPot[idx] = 0;
+                                continue;
+                            }
+                        }
+
+                        let neighbors = this.getNeighbors(idx);
+                        let free = neighbors.find(nIdx => newGrid[nIdx] === STATES.EMPTY || newGrid[nIdx] === STATES.HEALTHY);
+                        if (free === undefined) continue;
+
+                        if (Math.random() < this.params.prob_proliferation) {
+                            if (isStem) {
+                                if (Math.random() < this.params.prob_stem_division) {
+                                    newGrid[free] = STATES.CANCER_STEM;
+                                    newPot[free] = this.params.max_proliferation_potential + 1;
+                                } else {
+                                    newGrid[free] = STATES.CANCER;
+                                    newPot[free] = this.params.max_proliferation_potential;
+                                }
+                            } else {
+                                let p = this.potential[idx];
+                                newGrid[free] = STATES.CANCER;
+                                newPot[free] = p - 1;
+                                newPot[idx] = p - 1;
+                            }
+                            continue;
+                        }
+
+                        if (Math.random() < this.params.prob_migration) {
+                            newGrid[free] = state;
+                            newPot[free] = this.potential[idx];
+                            newGrid[idx] = STATES.EMPTY;
+                            newPot[idx] = 0;
+                        }
+                    }
+                }
+
+                if (currentCancerCount > 0 && currentImmuneCount > 0) {
+                    let rate = this.params.immune_recruit_rate * currentImmuneCount * currentCancerCount / (1000 + currentCancerCount);
+                    rate = Math.max(rate, 0.01 * currentCancerCount / (1000 + currentCancerCount));
+                    let recruits = Math.floor(rate) + (Math.random() < (rate % 1) ? 1 : 0);
+
+                    for (let i = 0; i < recruits; i++) {
+                        let edge = Math.floor(Math.random() * 4);
+                        let r, c;
+                        if (edge === 0) { r = 0; c = Math.floor(Math.random() * N); }
+                        else if (edge === 1) { r = N - 1; c = Math.floor(Math.random() * N); }
+                        else if (edge === 2) { r = Math.floor(Math.random() * N); c = 0; }
+                        else { r = Math.floor(Math.random() * N); c = N - 1; }
+
+                        let idx = r * N + c;
+                        if (newGrid[idx] === STATES.EMPTY) newGrid[idx] = STATES.IMMUNE;
+                    }
+                }
+
+                this.grid = newGrid;
+                this.potential = newPot;
+                this.necroticTimer = newNec;
+            }
+
+            applyRadiotherapy(targetR, targetC, radius) {
+                let p_kill_rtc = 0.95, p_kill_stc = 0.6, p_tox = 0.3;
+                for (let r = 0; r < N; r++) {
+                    for (let c = 0; c < N; c++) {
+                        let dist = Math.sqrt((r - targetR) ** 2 + (c - targetC) ** 2);
+                        if (dist <= radius) {
+                            let idx = r * N + c;
+                            let state = this.grid[idx];
+                            if (state === STATES.CANCER && Math.random() < p_kill_rtc) this.grid[idx] = STATES.NECROTIC;
+                            else if (state === STATES.CANCER_STEM && Math.random() < p_kill_stc) this.grid[idx] = STATES.NECROTIC;
+                            else if ((state === STATES.HEALTHY || state === STATES.IMMUNE) && Math.random() < p_tox) this.grid[idx] = STATES.NECROTIC;
+                        }
+                    }
+                }
+            }
+
+            applyChemotherapy() {
+                let p_kill_rtc = 0.8, p_kill_stc = 0.3, p_tox_h = 0.05, p_tox_i = 0.15;
+                for (let i = 0; i < N * N; i++) {
+                    let state = this.grid[i];
+                    if (state === STATES.CANCER && Math.random() < p_kill_rtc) this.grid[i] = STATES.NECROTIC;
+                    else if (state === STATES.CANCER_STEM && Math.random() < p_kill_stc) this.grid[i] = STATES.NECROTIC;
+                    else if (state === STATES.HEALTHY && Math.random() < p_tox_h) this.grid[i] = STATES.NECROTIC;
+                    else if (state === STATES.IMMUNE && Math.random() < p_tox_i) this.grid[i] = STATES.EMPTY;
+                }
+            }
+
+            applyImmunotherapy() {
+                let boost_radius = 2, p_kill_c = 0.85, p_kill_s = 0.4, recruit_rate = 0.03;
+                let newGrid = new Int8Array(this.grid);
+                for (let r = 0; r < N; r++) {
+                    for (let c = 0; c < N; c++) {
+                        let i = r * N + c;
+                        let state = this.grid[i];
+
+                        if ((state === STATES.EMPTY || state === STATES.NECROTIC) && Math.random() < recruit_rate) {
+                            newGrid[i] = STATES.IMMUNE;
+                        } else if (state === STATES.IMMUNE) {
+                            for (let dr = -boost_radius; dr <= boost_radius; dr++) {
+                                for (let dc = -boost_radius; dc <= boost_radius; dc++) {
+                                    let nr = r + dr, nc = c + dc;
+                                    if (nr >= 0 && nr < N && nc >= 0 && nc < N) {
+                                        let ni = nr * N + nc;
+                                        let target = this.grid[ni];
+                                        if (target === STATES.CANCER && Math.random() < p_kill_c) newGrid[ni] = STATES.NECROTIC;
+                                        else if (target === STATES.CANCER_STEM && Math.random() < p_kill_s) newGrid[ni] = STATES.NECROTIC;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                this.grid = newGrid;
+            }
+        }
+
+        const COLORS = {
+            [STATES.EMPTY]: '#0f172a',
+            [STATES.HEALTHY]: '#5a5f59',
+            [STATES.CANCER]: '#ef4444',
+            [STATES.CANCER_STEM]: '#a855f7',
+            [STATES.IMMUNE]: '#0ea5e9',
+            [STATES.NECROTIC]: '#451a03'
+        };
+
+        const sim = new TumorSimulation();
+        let currentScenario = 'control';
+        let isPlaying = true;
+        let animationId;
+
+        let visualEffects = [];
+
+        const canvas = document.getElementById('ca-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const CELL_SIZE = 7;
+        canvas.width = N * CELL_SIZE;
+        canvas.height = N * CELL_SIZE;
+
+        const chartCtx = document.getElementById('growthChart').getContext('2d');
+        const chart = new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Пухлина (RTC+STC)', borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', data: [], fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 },
+                    { label: 'Імунні клітини', borderColor: '#0ea5e9', data: [], tension: 0.4, pointRadius: 0, borderWidth: 1 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } }
+            }
+        });
+
+        function drawGrid() {
+            ctx.fillStyle = COLORS[STATES.EMPTY];
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < N * N; i++) {
+                let state = sim.grid[i];
+                let r = Math.floor(i / N);
+                let c = i % N;
+
+                if (state === STATES.EMPTY) {
+                    ctx.fillStyle = 'rgba(30, 41, 59, 0.4)';
+                    ctx.fillRect(c * CELL_SIZE + 1, r * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                } else {
+                    ctx.fillStyle = COLORS[state];
+                    ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                }
+            }
+
+            for (let i = visualEffects.length - 1; i >= 0; i--) {
+                let ef = visualEffects[i];
+                ctx.fillStyle = ef.color;
+
+                if (ef.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(ef.c * CELL_SIZE, ef.r * CELL_SIZE, ef.radius * CELL_SIZE, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (ef.type === 'overlay') {
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
+                ef.life -= 0.05;
+                if (ef.life <= 0) visualEffects.splice(i, 1);
+            }
+        }
+
+        function updateStats() {
+            let rtc = 0, stc = 0, imm = 0;
+            for (let i = 0; i < N * N; i++) {
+                if (sim.grid[i] === STATES.CANCER) rtc++;
+                else if (sim.grid[i] === STATES.CANCER_STEM) stc++;
+                else if (sim.grid[i] === STATES.IMMUNE) imm++;
+            }
+
+            document.getElementById('stat-day').innerText = `День ${sim.stepCount}`;
+            document.getElementById('stat-rtc').innerText = rtc;
+            document.getElementById('stat-stc').innerText = stc;
+            document.getElementById('stat-imm').innerText = imm;
+
+            let statusEl = document.getElementById('sim-status');
+            if (rtc + stc === 0 && sim.stepCount > 10) {
+                statusEl.innerText = "ПУХЛИНУ ЗНИЩЕНО";
+                statusEl.style.color = "#4ade80";
+                statusEl.style.borderColor = "#4ade80";
+            } else {
+                statusEl.innerText = "Пухлина розвивається";
+                statusEl.style.color = "var(--accent)";
+                statusEl.style.borderColor = "var(--accent)";
+            }
+
+            if (sim.stepCount % 5 === 0) {
+                chart.data.labels.push(sim.stepCount);
+                chart.data.datasets[0].data.push(rtc + stc);
+                chart.data.datasets[1].data.push(imm);
+                if (chart.data.labels.length > 100) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                    chart.data.datasets[1].data.shift();
+                }
+                chart.update();
+            }
+        }
+
+        function loop() {
+            if (isPlaying) {
+                sim.step();
+                updateStats();
+
+                drawGrid();
+                setTimeout(() => { animationId = requestAnimationFrame(loop); }, 30);
+            }
+        }
+
+        function resetSim() {
+            sim.init(currentScenario);
+            document.getElementById('slide-pp').value = sim.params.prob_proliferation;
+            document.getElementById('val-pp').innerText = (sim.params.prob_proliferation * 100).toFixed(1) + '%';
+            document.getElementById('slide-pm').value = sim.params.prob_migration;
+            document.getElementById('val-pm').innerText = (sim.params.prob_migration * 100).toFixed(1) + '%';
+            document.getElementById('slide-pa').value = sim.params.prob_apoptosis;
+            document.getElementById('val-pa').innerText = (sim.params.prob_apoptosis * 100).toFixed(1) + '%';
+
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.data.datasets[1].data = [];
+            chart.update();
+            visualEffects = [];
+
+            let statusEl = document.getElementById('sim-status');
+            statusEl.innerText = "Ініціалізація...";
+            statusEl.style.color = "var(--text-muted)";
+            statusEl.style.borderColor = "var(--border)";
+
+            drawGrid();
+            updateStats();
+        }
+
+        document.getElementById('btn-play').addEventListener('click', (e) => {
+            isPlaying = !isPlaying;
+            e.target.innerText = isPlaying ? 'Пауза' : 'Старт';
+            e.target.style.background = isPlaying ? 'var(--accent)' : '#1e293b';
+            e.target.style.color = isPlaying ? '#000' : 'white';
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', resetSim);
+
+        document.getElementById('scenario-buttons').addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') return;
+            document.querySelectorAll('#scenario-buttons button').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentScenario = e.target.dataset.scenario;
+            resetSim();
+        });
+
+        ['pp', 'pm', 'pa'].forEach(param => {
+            document.getElementById(`slide-${param}`).addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                document.getElementById(`val-${param}`).innerText = (val * 100).toFixed(1) + '%';
+                if (param === 'pp') sim.params.prob_proliferation = val;
+                if (param === 'pm') sim.params.prob_migration = val;
+                if (param === 'pa') sim.params.prob_apoptosis = val;
+            });
+        });
+
+        let isTargetingRadio = false;
+
+        document.getElementById('btn-radio').addEventListener('click', () => {
+            isTargetingRadio = !isTargetingRadio;
+            if (isTargetingRadio) {
+                canvas.classList.add('targeting');
+                document.getElementById('btn-radio').innerText = "Клікніть по сітці (Радіус 10)";
+                document.getElementById('btn-radio').style.background = "rgba(239, 68, 68, 0.4)";
+            } else {
+                canvas.classList.remove('targeting');
+                document.getElementById('btn-radio').innerText = "Радіотерапія (Вказати ціль)";
+                document.getElementById('btn-radio').style.background = "";
+            }
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (!isTargetingRadio) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const c = Math.floor(x / CELL_SIZE);
+            const r = Math.floor(y / CELL_SIZE);
+
+            const radius = 10;
+            sim.applyRadiotherapy(r, c, radius);
+
+            visualEffects.push({ type: 'circle', r: r, c: c, radius: radius, color: 'rgba(234, 179, 8, 0.6)', life: 1.0 });
+
+            isTargetingRadio = false;
+            canvas.classList.remove('targeting');
+            document.getElementById('btn-radio').innerText = "Радіотерапія (Вказати ціль)";
+            document.getElementById('btn-radio').style.background = "";
+
+            updateStats();
+        });
+
+        document.getElementById('btn-chemo').addEventListener('click', () => {
+            sim.applyChemotherapy();
+            visualEffects.push({ type: 'overlay', color: 'rgba(239, 68, 68, 0.3)', life: 0.8 });
+            updateStats();
+        });
+
+        document.getElementById('btn-immuno').addEventListener('click', () => {
+            sim.applyImmunotherapy();
+            visualEffects.push({ type: 'overlay', color: 'rgba(14, 165, 233, 0.3)', life: 0.8 });
+            updateStats();
+        });
+
+        resetSim();
+        loop();
+
+    </script>
+</body>
+
+</html>
