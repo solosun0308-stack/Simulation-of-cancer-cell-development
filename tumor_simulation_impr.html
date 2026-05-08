@@ -776,6 +776,7 @@
             e.target.innerText = isPlaying ? 'Пауза' : 'Старт';
             e.target.style.background = isPlaying ? 'var(--accent)' : '#1e293b';
             e.target.style.color = isPlaying ? '#000' : 'white';
+            if (isPlaying) loop();
         });
 
         document.getElementById('btn-reset').addEventListener('click', resetSim);
