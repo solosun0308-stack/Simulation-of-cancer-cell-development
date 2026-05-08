@@ -174,7 +174,7 @@ python main.py --scenario immuno --steps 200 --grid-size 80
 | `--seed` | None | Random seed для відтворюваності |
 
 ### Генерація графіків
-![Аналіз клітинного автомату пухлини](simulation_analysis.png)
+![Аналіз клітинного автомату пухлини](tumor_analysis.png)
 ```bash
 python plot_simulation.py
 # або з параметрами:
@@ -184,7 +184,7 @@ python plot_simulation.py 70 150
 ### Порівняння методів лікування
 ![Результати порівняння лікувань](treatment_comparison.png)
 ```bash
-python compare_treatment.py
+python compare_treatments.py
 # або з параметрами (розмір решітки, кроки):
 python compare_treatments.py 80 200
 ```
@@ -192,6 +192,7 @@ python compare_treatments.py 80 200
 - без лікування
 - хіміотерапія (кожні 10 кроків)
 - радіотерапія (один раз в середині симуляції)
+- імуннотерапія
 
 ### Тест усіх методів терапії
 
