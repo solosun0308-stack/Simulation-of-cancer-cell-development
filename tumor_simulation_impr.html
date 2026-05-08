@@ -849,6 +849,140 @@
         loop();
 
     </script>
+
+    <script>
+
+        (function injectMultiUI() {
+            const paramsPanel = document.querySelector('.panel:last-of-type');
+            const sliderHTML = `
+        <div class="slider-group" id="multi-tumor-slider" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid var(--border)">
+            <div class="slider-label">
+                <span>Кількість вогнищ</span>
+                <span id="val-tumors">5</span>
+            </div>
+            <input type="range" id="slide-tumors" min="1" max="20" step="1" value="5">
+        </div>`;
+            paramsPanel.insertAdjacentHTML('beforeend', sliderHTML);
+
+            document.getElementById('slide-tumors').addEventListener('input', (e) => {
+                document.getElementById('val-tumors').innerText = e.target.value;
+            });
+        })();
+
+        document.getElementById('scenario-buttons').addEventListener('click', () => {
+            const slider = document.getElementById('multi-tumor-slider');
+            setTimeout(() => {
+                slider.style.display = (currentScenario === 'multi') ? 'block' : 'none';
+            }, 0);
+        });
+
+        TumorSimulation.prototype.initMulti = function (nTumors) {
+            this.grid.fill(STATES.EMPTY);
+            this.potential.fill(0);
+            this.necroticTimer.fill(0);
+            this.stepCount = 0;
+
+            this.params.max_proliferation_potential = 10;
+            this.params.prob_apoptosis = 0.005;
+            this.params.prob_stem_division = 0.02;
+            this.params.prob_immune_kill = 0.15;
+            this.params.prob_immune_death = 0.05;
+            this.params.immune_migration_speed = 0.3;
+            this.params.immune_recruit_rate = 0.001;
+
+            const initHealthy = 0.2;
+            const initImmune = 30;
+            const minDist = 10;
+
+            for (let i = 0; i < N * N; i++) {
+                if (Math.random() < initHealthy) this.grid[i] = STATES.HEALTHY;
+            }
+
+            const maxTumors = Math.max(1, Math.floor((N * N) / 200));
+            const n = Math.min(nTumors, maxTumors);
+
+            const placed = [];
+            let attempts = 0;
+
+            while (placed.length < n && attempts < 2000) {
+                attempts++;
+                const r = 5 + Math.floor(Math.random() * (N - 10));
+                const c = 5 + Math.floor(Math.random() * (N - 10));
+
+                const tooClose = placed.some(([pr, pc]) =>
+                    Math.abs(r - pr) < minDist && Math.abs(c - pc) < minDist
+                );
+                if (tooClose) continue;
+
+                const idx = r * N + c;
+                if (this.grid[idx] === STATES.HEALTHY || this.grid[idx] === STATES.EMPTY) {
+                    this.grid[idx] = STATES.CANCER_STEM;
+                    this.potential[idx] = this.params.max_proliferation_potential + 1;
+                    placed.push([r, c]);
+                }
+            }
+
+            let immunePlaced = 0, immAttempts = 0;
+            while (immunePlaced < initImmune && immAttempts < N * N) {
+                const idx = Math.floor(Math.random() * (N * N));
+                if (this.grid[idx] === STATES.EMPTY || this.grid[idx] === STATES.HEALTHY) {
+                    this.grid[idx] = STATES.IMMUNE;
+                    immunePlaced++;
+                }
+                immAttempts++;
+            }
+
+            return placed.length;
+        };
+
+        const _originalResetSim = resetSim;
+        window.resetSim = function () {
+            if (currentScenario === 'multi') {
+                const nTumors = parseInt(document.getElementById('slide-tumors').value, 10);
+
+                sim.params.prob_proliferation = 0.0417;
+                sim.params.prob_migration = 0.02;
+                sim.params.prob_apoptosis = 0.005;
+
+                const actual = sim.initMulti(nTumors);
+
+                document.getElementById('slide-pp').value = sim.params.prob_proliferation;
+                document.getElementById('val-pp').innerText = (sim.params.prob_proliferation * 100).toFixed(1) + '%';
+                document.getElementById('slide-pm').value = sim.params.prob_migration;
+                document.getElementById('val-pm').innerText = (sim.params.prob_migration * 100).toFixed(1) + '%';
+                document.getElementById('slide-pa').value = sim.params.prob_apoptosis;
+                document.getElementById('val-pa').innerText = (sim.params.prob_apoptosis * 100).toFixed(1) + '%';
+
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+                chart.data.datasets[1].data = [];
+                chart.update();
+                visualEffects = [];
+
+                const statusEl = document.getElementById('sim-status');
+                statusEl.innerText = `Ініціалізовано ${actual} вогнищ`;
+                statusEl.style.color = 'var(--accent)';
+                statusEl.style.borderColor = 'var(--accent)';
+
+                drawGrid();
+                updateStats();
+            } else {
+                _originalResetSim();
+            }
+        };
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            window.resetSim();
+        });
+
+        document.getElementById('scenario-buttons').addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') return;
+            setTimeout(() => { window.resetSim(); }, 0);
+        });
+
+    </script>
+
+
 </body>
 
 </html>
