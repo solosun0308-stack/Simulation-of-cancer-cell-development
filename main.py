@@ -39,9 +39,7 @@ def run_no_treatment(args):
     import numpy as np
     if args.seed is not None:
         np.random.seed(args.seed)
-    params = SimulationParams(grid_size=args.grid_size,
-                              prob_stem_division=0.02,
-                              initial_healthy_density=0.2,
+    params = SimulationParams(grid_size=args.grid_size, prob_stem_division=0.02, initial_healthy_density=0.2,
                               initial_immune_count=20)
     ca = TumorCA(params)
     ca.initialize(cancer_type='stem')
@@ -51,9 +49,7 @@ def run_rtc(args):
     import numpy as np
     if args.seed is not None:
         np.random.seed(args.seed)
-    params = SimulationParams(grid_size=args.grid_size,
-                              prob_apoptosis=0.0,
-                              initial_healthy_density=0.0,
+    params = SimulationParams(grid_size=args.grid_size,prob_apoptosis=0.0,initial_healthy_density=0.0,
                               initial_immune_count=0)
     ca = TumorCA(params)
     ca.initialize(cancer_type='regular')
@@ -63,10 +59,7 @@ def run_stem(args):
     import numpy as np
     if args.seed is not None:
         np.random.seed(args.seed)
-    params = SimulationParams(grid_size=args.grid_size,
-                              prob_apoptosis=0.0,
-                              prob_stem_division=0.0,
-                              initial_healthy_density=0.0,
+    params = SimulationParams(grid_size=args.grid_size,prob_apoptosis=0.0,prob_stem_division=0.0,initial_healthy_density=0.0,
                               initial_immune_count=0)
     ca = TumorCA(params)
     ca.initialize(cancer_type='stem')
@@ -77,11 +70,8 @@ def run_immune(args):
     import numpy as np
     if args.seed is not None:
         np.random.seed(args.seed)
-    params = SimulationParams(grid_size=args.grid_size,
-                              prob_stem_division=0.02,
-                              initial_healthy_density=0.2,
-                              initial_immune_count=20,
-                              prob_immune_kill=0.2)
+    params = SimulationParams(grid_size=args.grid_size,prob_stem_division=0.02,initial_healthy_density=0.2,
+                              initial_immune_count=20, prob_immune_kill=0.2)
     ca = TumorCA(params)
     ca.initialize(cancer_type='stem')
     return _simple_run(ca, args.steps)
@@ -91,11 +81,8 @@ def run_multi(args):
     import numpy as np
     if args.seed is not None:
         np.random.seed(args.seed)
-    params = SimulationParams(grid_size=args.grid_size,
-                              prob_stem_division=0.02,
-                              initial_healthy_density=0.2,
-                              initial_immune_count=30,
-                              prob_immune_kill=0.15)
+    params = SimulationParams(grid_size=args.grid_size,prob_stem_division=0.02,initial_healthy_density=0.2,
+                              initial_immune_count=30,prob_immune_kill=0.15)
     ca = TumorCA(params)
     ca.initialize_multi(n_tumors=5, cancer_type='stem')
     return _simple_run(ca, args.steps)
@@ -105,9 +92,7 @@ def run_chemo(args):
     import numpy as np
     if args.seed is not None:
         np.random.seed(args.seed)
-    params = SimulationParams(grid_size=args.grid_size,
-                              prob_stem_division=0.02,
-                              initial_healthy_density=0.2,
+    params = SimulationParams(grid_size=args.grid_size, prob_stem_division=0.02, initial_healthy_density=0.2,
                               initial_immune_count=20)
     ca = TumorCA(params)
     ca.initialize(cancer_type='stem')
@@ -124,17 +109,13 @@ def run_radio(args):
     import numpy as np
     if args.seed is not None:
         np.random.seed(args.seed)
-    params = SimulationParams(grid_size=args.grid_size,
-                              prob_stem_division=0.02,
-                              initial_healthy_density=0.2,
+    params = SimulationParams(grid_size=args.grid_size,prob_stem_division=0.02,initial_healthy_density=0.2,
                               initial_immune_count=20)
     ca = TumorCA(params)
     ca.initialize(cancer_type='stem')
     _simple_run(ca, args.steps)
     center = args.grid_size // 2
-    ca.grid = apply_radiotherapy(ca.grid,
-                                 target_r=center,
-                                 target_c=center,
+    ca.grid = apply_radiotherapy(ca.grid,target_r=center,target_c=center,
                                  radius=args.radio_radius)
     print(f"\nРадіотерапія застосована (центр={center}, радіус={args.radio_radius})")
     print(ca.stats_str())
@@ -144,9 +125,7 @@ def run_immuno(args):
     import numpy as np
     if args.seed is not None:
         np.random.seed(args.seed)
-    params = SimulationParams(grid_size=args.grid_size,
-                              prob_stem_division=0.02,
-                              initial_healthy_density=0.2,
+    params = SimulationParams(grid_size=args.grid_size,prob_stem_division=0.02,initial_healthy_density=0.2,
                               initial_immune_count=20)
     ca = TumorCA(params)
     ca.initialize(cancer_type='stem')
@@ -168,12 +147,12 @@ def main():
 
     runners = {
         "no-treatment": run_no_treatment,
-        "rtc":          run_rtc,
-        "stem":         run_stem,
-        "immune":       run_immune,
-        "multi":        run_multi,
-        "chemo":        run_chemo,
-        "radio":        run_radio,
+        "rtc": run_rtc,
+        "stem": run_stem,
+        "immune": run_immune,
+        "multi": run_multi,
+        "chemo": run_chemo,
+        "radio": run_radio,
         "immuno": run_immuno
     }
     runners[args.scenario](args)

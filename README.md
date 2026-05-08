@@ -35,7 +35,7 @@ Python-реалізація **стохастичного клітинного а
 ---
 
 ## Структура проєкту
-Simulation-of-cancer-cell-development/
+```Simulation-of-cancer-cell-development/
 ├── tumor_new.py           # Ядро моделі: клас TumorCA, параметри, сценарії
 ├── main.py                # Точка входу з argparse
 ├── chemotherapy.py        # Модуль хіміотерапії
@@ -47,6 +47,7 @@ Simulation-of-cancer-cell-development/
 ├── ПОЯСНЕННЯ_МОДЕЛІ.md    # Детальне пояснення математики моделі
 ├── .gitignore
 └── README.md
+```
 
 > 📄 Детальне пояснення математики, формул і алгоритмів — у файлі [ПОЯСНЕННЯ_МОДЕЛІ.md](ПОЯСНЕННЯ_МОДЕЛІ.md)
 ---
@@ -173,7 +174,7 @@ python main.py --scenario immuno --steps 200 --grid-size 80
 | `--seed` | None | Random seed для відтворюваності |
 
 ### Генерація графіків
-
+![Аналіз клітинного автомату пухлини](simulation_analysis.png)
 ```bash
 python plot_simulation.py
 # або з параметрами:
@@ -181,9 +182,9 @@ python plot_simulation.py 70 150
 ```
 
 ### Порівняння методів лікування
-
+![Результати порівняння лікувань](treatment_comparison.png)
 ```bash
-python compare_treatments.py
+python compare_treatment.py
 # або з параметрами (розмір решітки, кроки):
 python compare_treatments.py 80 200
 ```

@@ -18,12 +18,12 @@ import random
 import os
 import time
 
-EMPTY       = 0
-HEALTHY     = 1
-CANCER      = 2
+EMPTY = 0
+HEALTHY = 1
+CANCER = 2
 CANCER_STEM = 3
-IMMUNE      = 4
-NECROTIC    = 5
+IMMUNE = 4
+NECROTIC = 5
 
 class SimulationParams:
     """
