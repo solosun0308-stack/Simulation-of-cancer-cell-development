@@ -177,9 +177,9 @@ class TumorCA:
         Оновлення синхронне(оновлення стану всіх клітин тоді застосування).
         """
         self.step_count += 1
-        new_grid    = self.grid.copy()
-        new_pot     = self.potential.copy()
-        new_nec     = self.necrotic_timer.copy()
+        new_grid = self.grid.copy()
+        new_pot = self.potential.copy()
+        new_nec = self.necrotic_timer.copy()
         cells = np.argwhere(self.grid != EMPTY)
         np.random.shuffle(cells)
         for row, col in cells:
